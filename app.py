@@ -43,12 +43,14 @@ def load():
     return SentenceTransformer("all-MiniLM-L6-v2")
 em= load()
 file = st.file_uploader("Upload a PDF file", type="pdf")
+pr ="Processing the document and creating embeddings..."
+bar = st.progress(0, text=pr)
 if file:
     reader = pypdf.PdfReader(file)
 
     all_chunks = []
     metadata = []
-
+    n = 0
     CHUNK_SIZE = 100
     OVERLAP = 50
     for idx, page in enumerate(reader.pages):
@@ -62,9 +64,11 @@ if file:
             chunk = " ".join(words[i:i + CHUNK_SIZE])
             all_chunks.append(chunk)
             metadata.append({"page": idx + 1})
+        n += 1
+        bar.progress(n / len(reader.pages), text=pr)
 
     st.success(f"Total chunks indexed: {len(all_chunks)}")
-
+    bar.empty()
     chunk_embeddings = em.encode(all_chunks)
     query = st.text_input("Ask a question from the document")
 
