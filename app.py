@@ -39,21 +39,19 @@ Question:
 st.set_page_config(page_title="Ask Your PDF", layout="wide")
 st.title("📘 Ask Your PDF")
 @st.cache_resource
-def load():
+def load_model():
     return SentenceTransformer("all-MiniLM-L6-v2")
-em= load()
-file = st.file_uploader("Upload a PDF file", type="pdf")
+embed_model = load_model()
+uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
+if uploaded_file:
+    reader = pypdf.PdfReader(uploaded_file)
 
-if file:
-    reader = pypdf.PdfReader(file)
-    pr ="Processing the document and creating embeddings..."
-    bar = st.progress(0, text=pr)
     all_chunks = []
     metadata = []
-    n = 0
+
     CHUNK_SIZE = 100
     OVERLAP = 50
-    for idx, page in enumerate(reader.pages):
+    for page_idx, page in enumerate(reader.pages):
         text = page.extract_text()
         if not text:
             continue
@@ -63,30 +61,28 @@ if file:
         for i in range(0, len(words) - CHUNK_SIZE + 1, CHUNK_SIZE - OVERLAP):
             chunk = " ".join(words[i:i + CHUNK_SIZE])
             all_chunks.append(chunk)
-            metadata.append({"page": idx + 1})
-        n += 1
-        bar.progress(n / len(reader.pages), text=pr)
+            metadata.append({"page": page_idx + 1})
 
     st.success(f"Total chunks indexed: {len(all_chunks)}")
-    bar.empty()
-    chunk_embeddings = em.encode(all_chunks)
+
+    chunk_embeddings = embed_model.encode(all_chunks)
     query = st.text_input("Ask a question from the document")
 
     if query:
-        query_embedding = em.encode([query])[0]
+        query_embedding = embed_model.encode([query])[0]
 
-        sc= []
+        scores = []
         for i, emb in enumerate(chunk_embeddings):
-            score= 1 - cosine(query_embedding, emb)
-            sc.append((i, score))
+            score = 1 - cosine(query_embedding, emb)
+            scores.append((i, score))
 
-        sc.sort(key=lambda x: x[1], reverse=True)
-        t = sc[:5]
+        scores.sort(key=lambda x: x[1], reverse=True)
+        top_k = scores[:5]
 
         st.subheader("🔍 Retrieved Context")
         context = ""
 
-        for idx, score in t:
+        for idx, score in top_k:
             page_no = metadata[idx]["page"]
             st.markdown(f"**Page {page_no} | score={score:.3f}**")
             st.write(all_chunks[idx])
