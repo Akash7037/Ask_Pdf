@@ -1,0 +1,37 @@
+import streamlit as st
+from supabase import create_client
+
+url = "https://ucrnxzdxougyostmwwli.supabase.co"
+key = "sb_publishable_uTYJVD1pFXOnArxZ7VTkFw__7IK1JQ4"
+
+sb = create_client(url, key)
+
+def auth_ui():
+    if "u" in st.session_state and "t" in st.session_state:
+        return
+
+    st.title("Login")
+
+    e = st.text_input("Email")
+    p = st.text_input("Password", type="password")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        if st.button("Login"):
+            try:
+                r = sb.auth.sign_in_with_password(
+                    {"email": e.strip(), "password": p}
+                )
+                st.session_state.u = r.user
+                st.session_state.t = r.session.access_token
+                st.rerun()
+            except Exception:
+                st.error("Invalid credentials")
+
+    with c2:
+        if st.button("Sign up"):
+            sb.auth.sign_up({"email": e.strip(), "password": p})
+            st.success("Account created")
+
+    st.stop()
