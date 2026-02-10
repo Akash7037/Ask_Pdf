@@ -15,7 +15,7 @@ To run the application, follow these steps:
    ```
 4. Start the application:
    ```bash
-   streamlit run app.py
+   streamlit run AP.py
    ```
 
 # Requirements
