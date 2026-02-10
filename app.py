@@ -43,11 +43,11 @@ def load():
     return SentenceTransformer("all-MiniLM-L6-v2")
 em= load()
 file = st.file_uploader("Upload a PDF file", type="pdf")
-pr ="Processing the document and creating embeddings..."
-bar = st.progress(0, text=pr)
+
 if file:
     reader = pypdf.PdfReader(file)
-
+    pr ="Processing the document and creating embeddings..."
+    bar = st.progress(0, text=pr)
     all_chunks = []
     metadata = []
     n = 0
@@ -77,7 +77,7 @@ if file:
 
         sc= []
         for i, emb in enumerate(chunk_embeddings):
-            sc= 1 - cosine(query_embedding, emb)
+            score= 1 - cosine(query_embedding, emb)
             sc.append((i, score))
 
         sc.sort(key=lambda x: x[1], reverse=True)
