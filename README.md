@@ -25,4 +25,4 @@ To run the application, follow these steps:
   - Other dependencies
 
 # Links
-- https://mhy2xyvj8bmtyfmws9a4pt.streamlit.app/
+- https://readmemd-ger92vc6pqjetw3jdfwtdw.streamlit.app/
