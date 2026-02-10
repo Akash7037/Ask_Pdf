@@ -2,4 +2,5 @@ streamlit
 pypdf
 sentence-transformers
 scipy
+supabase
 openai
