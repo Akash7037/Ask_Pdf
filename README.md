@@ -25,4 +25,4 @@ To run the application, follow these steps:
   - Other dependencies
 
 # Links
-- [Add link here later]
+- https://mhy2xyvj8bmtyfmws9a4pt.streamlit.app/
