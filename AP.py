@@ -43,11 +43,14 @@ previous answers:
         max_tokens=2048,
         stream=True
     )
-
+    bar = st.progress(0, text="Generating answer...")
+    total_chunks = 0
     for chunk in completion:
         if chunk.choices and chunk.choices[0].delta.content:
             res += chunk.choices[0].delta.content
-
+            total_chunks += 1
+            bar.progress(total_chunks / 100, text="Generating answer...")
+    bar.empty()
     return res
 u = st.session_state.u
 t = st.session_state.t
@@ -74,7 +77,8 @@ if f:
     r = pypdf.PdfReader(f)
 
     ch, meta = [], []
-
+    now = st.progress(0, text="Processing PDF...")
+    n=0
     for i, p in enumerate(r.pages):
         t = p.extract_text()
         if not t:
@@ -82,10 +86,13 @@ if f:
         w = t.split()
         for j in range(0, len(w) - 100, 50):
             ch.append(" ".join(w[j:j+100]))
+            now.progress((i + 1) / len(r.pages), text="Processing PDF...")
             meta.append(i + 1)
 
     emb = m.encode(ch)
-
+    now.progress(1.0, text="Processing PDF... Done!")
+    st.success("PDF processed successfully!")
+    now.empty()
     q = st.text_input("Ask")
 
     if q:
