@@ -11,11 +11,11 @@ To run the application, follow these steps:
    ```
 3. Install the required dependencies:
    ```bash
-   # Add the appropriate command here e.g., npm install or pip install -r requirements.txt
+   pip install requiments.txt
    ```
 4. Start the application:
    ```bash
-   # Insert command to run the app here
+   streamlit run app.py
    ```
 
 # Requirements
