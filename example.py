@@ -19,19 +19,34 @@ def auth_ui():
 
     with c1:
         if st.button("Login"):
-            try:
-                r = sb.auth.sign_in_with_password(
-                    {"email": e.strip(), "password": p}
-                )
-                st.session_state.u = r.user
-                st.session_state.t = r.session.access_token
-                st.rerun()
-            except Exception:
-                st.error("Invalid credentials")
+            if not e or not p:
+                st.error("Email and password required")
+            elif "@" not in e:
+                st.error("Invalid email")
+            else:
+                try:
+                    r = sb.auth.sign_in_with_password(
+                        {"email": e.strip(), "password": p}
+                    )
+                    st.session_state.u = r.user
+                    st.session_state.t = r.session.access_token
+                    st.rerun()
+                except Exception:
+                    st.error("Invalid credentials")
 
     with c2:
         if st.button("Sign up"):
-            sb.auth.sign_up({"email": e.strip(), "password": p})
-            st.success("Account created")
+            if not e or not p:
+                st.error("Email and password required")
+            elif "@" not in e:
+                st.error("Invalid email")
+            else:
+                try:
+                    sb.auth.sign_up(
+                        {"email": e.strip(), "password": p}
+                    )
+                    st.success("Account created. Login now.")
+                except Exception:
+                    st.error("Signup failed")
 
     st.stop()
