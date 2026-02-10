@@ -3,7 +3,7 @@ import pypdf
 from supabase import create_client
 from sentence_transformers import SentenceTransformer
 from scipy.spatial.distance import cosine
-from example import auth_ui
+from exmaple import auth_ui
 from openai import OpenAI
 
 url = "https://ucrnxzdxougyostmwwli.supabase.co"
