@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 from scipy.spatial.distance import cosine
 from example import auth_ui
 from openai import OpenAI
-st.logo("logo.png")
+st.logo("logo.png",size="medium")
 url = "https://ucrnxzdxougyostmwwli.supabase.co"
 key = "sb_publishable_uTYJVD1pFXOnArxZ7VTkFw__7IK1JQ4"
 
