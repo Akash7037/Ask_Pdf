@@ -25,5 +25,5 @@ To run the application, follow these steps:
   - Other dependencies
 
 # Links
-- https://readmemd-ger92vc6pqjetw3jdfwtdw.streamlit.app/
-- # [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://readmemd-ger92vc6pqjetw3jdfwtdw.streamlit.app/)
+
+## [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://readmemd-ger92vc6pqjetw3jdfwtdw.streamlit.app/)
