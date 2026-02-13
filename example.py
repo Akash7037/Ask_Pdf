@@ -1,8 +1,8 @@
 import streamlit as st
 from supabase import create_client
 st.logo("logo.png",size="large")
-url = "https://ucrnxzdxougyostmwwli.supabase.co"
-key = "sb_publishable_uTYJVD1pFXOnArxZ7VTkFw__7IK1JQ4"
+url = "SUPABASE_LINK"
+key = "YOUR_KEY"
 
 sb = create_client(url, key)
 
