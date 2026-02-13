@@ -6,8 +6,8 @@ from scipy.spatial.distance import cosine
 from example import auth_ui
 from openai import OpenAI
 st.logo("logo.png",size="large")
-url = "https://ucrnxzdxougyostmwwli.supabase.co"
-key = "sb_publishable_uTYJVD1pFXOnArxZ7VTkFw__7IK1JQ4"
+url = "YOUR_SUPA_BASE KEY"
+key = "YOUR_KEY"
 
 auth_ui()
 def ai(context, question, question_list=None, answer_list=None):
@@ -32,7 +32,7 @@ previous answers:
 
     client = OpenAI(
         base_url="https://integrate.api.nvidia.com/v1",
-        api_key="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"
+        api_key="YOUR-API"
     )
 
     completion = client.chat.completions.create(
