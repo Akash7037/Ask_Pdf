@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pypdf
+sentence-transformers
+scipy
+supabase
+openai
+pydantic
+python-dotenv
+python-multipart
+slowapi
