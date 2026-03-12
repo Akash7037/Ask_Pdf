@@ -40,12 +40,16 @@ if SUPABASE_URL and SUPABASE_KEY:
 else:
     supabase = None
 
-try:
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-except Exception as e:
-    print(f"Failed to load sentence transformer: {e}")
-    model = None
+model = None
 
+@app.on_event("startup")
+async def load_model():
+    global model
+    try:
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+        print("Model loaded successfully")
+    except Exception as e:
+        print(f"Model load failed: {e}")
 # In-memory document cache (For a more scalable architecture, store embeddings in a vector DB like Supabase pgvector)
 # Structure: { "doc_id": { "chunks": [...], "embeddings": [...] } }
 document_cache = {}
