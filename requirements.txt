@@ -1,5 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 pypdf
 sentence-transformers
 scipy
@@ -9,3 +9,4 @@ pydantic
 python-dotenv
 python-multipart
 slowapi
+torch --index-url https://download.pytorch.org/whl/cpu
