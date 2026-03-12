@@ -50,10 +50,15 @@ except Exception as e:
 # Structure: { "doc_id": { "chunks": [...], "embeddings": [...] } }
 document_cache = {}
 
+class ChatHistoryItem(BaseModel):
+    question: str
+    answer: str
+
 class QueryRequest(BaseModel):
     doc_id: str
     question: str
     user_id: str # Obtained from the frontend after Supabase Auth
+    chat_history: list[ChatHistoryItem] = [] # Last N Q&A pairs for context
 
 @app.get("/")
 def read_root():
@@ -69,18 +74,19 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
     try:
         pdf = pypdf.PdfReader(file.file)
         chunks = []
+        all_text = ""
         for p in pdf.pages:
             t = p.extract_text()
-            if not t:
-                continue
-            w = t.split()
-            # Split into chunks of 100 words with 50 words overlap
-            for j in range(0, len(w) - 100, 50):
-                chunks.append(" ".join(w[j:j+100]))
-        
-        # Handle the remaining words if fewer than 100
-        if len(w) < 100 and len(w) > 0:
-            chunks.append(" ".join(w))
+            if t:
+                all_text += t + " "
+                
+        w = all_text.split()
+        # Split into chunks of 100 words with 50 words overlap
+        for j in range(0, len(w), 50):
+            chunk_words = w[j:j+100]
+            if not chunk_words:
+                break
+            chunks.append(" ".join(chunk_words))
 
         if not chunks:
             raise HTTPException(status_code=400, detail="No readable text found in PDF")
@@ -121,31 +127,27 @@ async def ask_question(request: Request, body: QueryRequest):
     for i, _ in top_similar:
         context += chunks[i] + " \n"
 
-    # Fetch previous answers for context (if Supabase is set up)
-    answer_text = ""
-    if supabase:
-        try:
-            # We fetch recent questions and answers from this user for limited context
-            history = supabase.table("queries").select("answer").eq("user_id", body.user_id).order("created_at", desc=True).limit(5).execute()
-            if history.data:
-                for item in history.data:
-                    answer_text += item.get("answer", "") + " "
-                words = answer_text.split()
-                answer_text = " ".join(words[:200]) # Keep context short
-        except Exception as e:
-            print(f"Could not fetch history: {e}")
+    # Build conversation history string from the client-provided chat_history
+    conversation_history = ""
+    if body.chat_history:
+        # Take last 10 items (already trimmed on frontend, but enforce here too)
+        recent_history = body.chat_history[-10:]
+        for item in recent_history:
+            conversation_history += f"User: {item.question}\nAssistant: {item.answer}\n\n"
 
-    prompt = f"""
+    prompt = f"""You are an AI assistant that answers questions based on a PDF document.
 Answer the question strictly based on the context below.
-Context:
+
+Document Context:
 {context}
 
-Question:
+Conversation History (last {len(body.chat_history)} exchanges):
+{conversation_history if conversation_history else 'No prior conversation.'}
+
+Current Question:
 {body.question}
 
-Previous conversation context:
-{answer_text}
-"""
+Answer:"""
 
     client = OpenAI(
         base_url="https://integrate.api.nvidia.com/v1",
