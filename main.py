@@ -1,7 +1,7 @@
 import os
 import uuid
 import pypdf
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Depends
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
@@ -15,30 +15,44 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize Rate Limiter using IP address
-limiter = Limiter(key_func=get_remote_address)
+# -------------------------
+# FastAPI Setup
+# -------------------------
+
 app = FastAPI(title="Ask PDF API")
+
+limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For production, change to the frontend URL (e.g. Netlify/Vercel URL)
+    allow_origins=["*"],  # change later to your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configuration
+# -------------------------
+# Environment Variables
+# -------------------------
+
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
 
+# -------------------------
+# Supabase
+# -------------------------
+
+supabase: Client | None = None
+
 if SUPABASE_URL and SUPABASE_KEY:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-else:
-    supabase = None
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# -------------------------
+# Model (loaded at startup)
+# -------------------------
 
 model = None
 
@@ -46,13 +60,21 @@ model = None
 async def load_model():
     global model
     try:
+        print("Loading embedding model...")
         model = SentenceTransformer("all-MiniLM-L6-v2")
         print("Model loaded successfully")
     except Exception as e:
-        print(f"Model load failed: {e}")
-# In-memory document cache (For a more scalable architecture, store embeddings in a vector DB like Supabase pgvector)
-# Structure: { "doc_id": { "chunks": [...], "embeddings": [...] } }
+        print("Model failed to load:", e)
+
+# -------------------------
+# In-memory cache
+# -------------------------
+
 document_cache = {}
+
+# -------------------------
+# Schemas
+# -------------------------
 
 class ChatHistoryItem(BaseModel):
     question: str
@@ -61,145 +83,168 @@ class ChatHistoryItem(BaseModel):
 class QueryRequest(BaseModel):
     doc_id: str
     question: str
-    user_id: str # Obtained from the frontend after Supabase Auth
-    chat_history: list[ChatHistoryItem] = [] # Last N Q&A pairs for context
+    user_id: str
+    chat_history: list[ChatHistoryItem] = []
+
+# -------------------------
+# Routes
+# -------------------------
 
 @app.get("/")
-def read_root():
-    return {"status": "Backend is running correctly"}
+def home():
+    return {"status": "Backend running"}
+
+# -------------------------
+# Upload PDF
+# -------------------------
 
 @app.post("/api/upload")
 @limiter.limit("5/minute")
 async def upload_pdf(request: Request, file: UploadFile = File(...)):
-    """Upload a PDF, extract text chunks, and generate embeddings."""
+
     if not model:
-        raise HTTPException(status_code=500, detail="Model not loaded")
-    
+        raise HTTPException(status_code=500, detail="Model not ready")
+
     try:
         pdf = pypdf.PdfReader(file.file)
-        chunks = []
+
         all_text = ""
-        for p in pdf.pages:
-            t = p.extract_text()
-            if t:
-                all_text += t + " "
-                
-        w = all_text.split()
-        # Split into chunks of 100 words with 50 words overlap
-        for j in range(0, len(w), 50):
-            chunk_words = w[j:j+100]
-            if not chunk_words:
+
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                all_text += text + " "
+
+        words = all_text.split()
+
+        chunks = []
+
+        for i in range(0, len(words), 50):
+            chunk = words[i:i+100]
+            if not chunk:
                 break
-            chunks.append(" ".join(chunk_words))
+            chunks.append(" ".join(chunk))
 
         if not chunks:
-            raise HTTPException(status_code=400, detail="No readable text found in PDF")
+            raise HTTPException(status_code=400, detail="No readable text")
 
         embeddings = model.encode(chunks)
-        
+
         doc_id = str(uuid.uuid4())
+
         document_cache[doc_id] = {
             "chunks": chunks,
             "embeddings": embeddings
         }
-        
-        return {"doc_id": doc_id, "message": "PDF processed successfully", "chunks_count": len(chunks)}
+
+        return {
+            "doc_id": doc_id,
+            "chunks": len(chunks)
+        }
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF processing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# -------------------------
+# Ask Question
+# -------------------------
 
 @app.post("/api/ask")
 @limiter.limit("10/minute")
-async def ask_question(request: Request, body: QueryRequest):
-    """Ask a question based on a previously uploaded PDF."""
+async def ask(request: Request, body: QueryRequest):
+
     if body.doc_id not in document_cache:
-        raise HTTPException(status_code=404, detail="Document not found or expired. Please upload again.")
+        raise HTTPException(status_code=404, detail="Document expired")
+
     if not NVIDIA_API_KEY:
-        raise HTTPException(status_code=500, detail="LLM API key is missing")
+        raise HTTPException(status_code=500, detail="API key missing")
 
-    doc_data = document_cache[body.doc_id]
-    chunks = doc_data["chunks"]
-    embeddings = doc_data["embeddings"]
+    data = document_cache[body.doc_id]
 
-    # Generate embedding for the question
-    qe = model.encode([body.question])[0]
-    
-    # Calculate cosine similarity
-    similarities = [(i, 1 - cosine(qe, e)) for i, e in enumerate(embeddings)]
-    top_similar = sorted(similarities, key=lambda x: x[1], reverse=True)[:3]
-    
+    chunks = data["chunks"]
+    embeddings = data["embeddings"]
+
+    question_embedding = model.encode([body.question])[0]
+
+    similarities = [
+        (i, 1 - cosine(question_embedding, emb))
+        for i, emb in enumerate(embeddings)
+    ]
+
+    top_chunks = sorted(similarities, key=lambda x: x[1], reverse=True)[:3]
+
     context = ""
-    for i, _ in top_similar:
-        context += chunks[i] + " \n"
 
-    # Build conversation history string from the client-provided chat_history
-    conversation_history = ""
-    if body.chat_history:
-        # Take last 10 items (already trimmed on frontend, but enforce here too)
-        recent_history = body.chat_history[-10:]
-        for item in recent_history:
-            conversation_history += f"User: {item.question}\nAssistant: {item.answer}\n\n"
+    for idx, _ in top_chunks:
+        context += chunks[idx] + "\n"
 
-    prompt = f"""You are an AI assistant that answers questions based on a PDF document.
-Answer the question strictly based on the context below.
+    history = ""
 
-Document Context:
+    for item in body.chat_history[-10:]:
+        history += f"User: {item.question}\nAssistant: {item.answer}\n"
+
+    prompt = f"""
+Answer based on the document.
+
+Context:
 {context}
 
-Conversation History (last {len(body.chat_history)} exchanges):
-{conversation_history if conversation_history else 'No prior conversation.'}
+Conversation:
+{history}
 
-Current Question:
+Question:
 {body.question}
-
-Answer:"""
+"""
 
     client = OpenAI(
         base_url="https://integrate.api.nvidia.com/v1",
         api_key=NVIDIA_API_KEY
     )
 
-    try:
-        completion = client.chat.completions.create(
-            model="deepseek-ai/deepseek-v3.1-terminus",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            top_p=0.7,
-            max_tokens=2048,
-        )
-        answer = completion.choices[0].message.content
-        
-        # Save to Supabase (if configured)
-        if supabase:
-            try:
-                supabase.table("queries").insert({
-                    "user_id": body.user_id,
-                    "question": body.question,
-                    "answer": answer
-                }).execute()
-            except Exception as store_e:
-                print(f"Could not store query: {store_e}")
-                
-        return {"answer": answer, "context_used": context}
+    response = client.chat.completions.create(
+        model="deepseek-ai/deepseek-v3.1-terminus",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2,
+        max_tokens=2048
+    )
 
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+    answer = response.choices[0].message.content
+
+    if supabase:
+        try:
+            supabase.table("queries").insert({
+                "user_id": body.user_id,
+                "question": body.question,
+                "answer": answer
+            }).execute()
+        except:
+            pass
+
+    return {"answer": answer}
+
+# -------------------------
+# History
+# -------------------------
 
 @app.get("/api/history/{user_id}")
-@limiter.limit("20/minute")
-async def get_history(request: Request, user_id: str):
-    """Fetch history of Q&A from Supabase"""
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Database not configured")
-        
-    try:
-        history = supabase.table("queries").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(10).execute()
-        return {"history": history.data}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch history: {str(e)}")
+async def history(user_id: str):
 
-# Add a run block for local testing
+    if not supabase:
+        raise HTTPException(status_code=500, detail="DB not configured")
+
+    data = supabase.table("queries")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .order("created_at", desc=True)\
+        .limit(10)\
+        .execute()
+
+    return {"history": data.data}
+
+# -------------------------
+# Local run
+# -------------------------
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
