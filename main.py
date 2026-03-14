@@ -54,17 +54,23 @@ if SUPABASE_URL and SUPABASE_KEY:
 # Model (loaded at startup)
 # -------------------------
 
-model = None
+# -------------------------
+# Model (lazy loaded)
+# -------------------------
 
-@app.on_event("startup")
-async def load_model():
-    global model
-    try:
-        print("Loading embedding model...")
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-        print("Model loaded successfully")
-    except Exception as e:
-        print("Model failed to load:", e)
+_model = None
+
+def get_model():
+    global _model
+    if _model is None:
+        try:
+            print("Loading embedding model...")
+            _model = SentenceTransformer("all-MiniLM-L6-v2")
+            print("Model loaded successfully")
+        except Exception as e:
+            print("Model failed to load:", e)
+            raise e
+    return _model
 
 # -------------------------
 # In-memory cache
@@ -102,6 +108,7 @@ def home():
 @limiter.limit("5/minute")
 async def upload_pdf(request: Request, file: UploadFile = File(...)):
 
+    model = get_model()
     if not model:
         raise HTTPException(status_code=500, detail="Model not ready")
 
@@ -164,6 +171,7 @@ async def ask(request: Request, body: QueryRequest):
     chunks = data["chunks"]
     embeddings = data["embeddings"]
 
+    model = get_model()
     question_embedding = model.encode([body.question])[0]
 
     similarities = [
