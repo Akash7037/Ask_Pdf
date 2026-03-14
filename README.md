@@ -163,11 +163,3 @@ See `LICENSE` for more information.
 
 ---
 
-✅ Small advice (GitHub trick):
-If you want your repo to look **more professional and get more stars**, add:
-
-* **Architecture Diagram**
-* **Example request/response**
-* **Screenshots of the chat**
-
-If you want, I can also help you turn this into a **🔥 top-tier GitHub README (like 10k-star projects)**.
