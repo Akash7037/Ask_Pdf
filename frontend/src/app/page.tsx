@@ -28,6 +28,12 @@ export default function AuthPage() {
     setLoading(true);
     setMessage(null);
 
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setMessage({ type: 'error', text: 'Supabase is not configured. Please add environment variables in Vercel.' });
+      setLoading(false);
+      return;
+    }
+
     if (!email || !password) {
       setMessage({ type: 'error', text: 'Email and password are required' });
       setLoading(false);
