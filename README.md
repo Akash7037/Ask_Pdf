@@ -26,8 +26,7 @@
 **Frontend**
 [https://ask-pdf-gray.vercel.app](https://ask-pdf-gray.vercel.app)
 
-**Backend API**
-[https://ask-pdf-backend-hh55.onrender.com](https://ask-pdf-backend-hh55.onrender.com)
+
 
 ---
 
@@ -108,18 +107,6 @@ http://localhost:8000/docs
 ```
 
 ---
-
-# 📡 API Endpoints
-
-| Method | Endpoint             | Description                               |
-| ------ | -------------------- | ----------------------------------------- |
-| GET    | `/`                  | Health check endpoint                     |
-| POST   | `/api/upload`        | Upload a PDF and receive a `doc_id`       |
-| POST   | `/api/ask`           | Ask a question using a `doc_id`           |
-| GET    | `/api/history/{uid}` | Retrieve chat history for a specific user |
-
----
-
 # ☁️ Deployment Guides
 
 ## Deploy Frontend to Vercel
