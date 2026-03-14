@@ -2,13 +2,13 @@
 
 :root {
   --bg-gradient-start: #2b303a;
-  --bg-gradient-end: #1a1d23;
+  --bg-gradient-end: #161a21;
   --primary: #d64933;
   --primary-hover: #bc3e2b;
   --text-main: #eee5e9;
   --text-muted: #92dce5;
-  --glass-bg: rgba(238, 229, 233, 0.05); /* Lavender Blush with low opacity */
-  --glass-border: rgba(146, 220, 229, 0.2); /* Frosted Blue with transparency */
+  --glass-bg: rgba(146, 220, 229, 0.03); /* Frosted Blue very subtle */
+  --glass-border: rgba(146, 220, 229, 0.15); /* Frosted Blue borders */
   --danger: #d64933;
   --success: #92dce5;
   --grey: #7c7c7c;
@@ -206,6 +206,7 @@ input:focus {
   font-size: 0.85rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
