@@ -22,13 +22,51 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-  background-attachment: fixed;
+  background-color: #020617; /* Slate-950 */
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  position: relative;
   color: var(--text-main);
   min-height: 100vh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, transparent 0%, #020617 80%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Add a subtle moving glow */
+body::after {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(214, 73, 51, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+  animation: glowMove 20s linear infinite;
+}
+
+@keyframes glowMove {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(5%, 5%); }
+  100% { transform: translate(0, 0); }
+}
+
+
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
@@ -160,24 +198,78 @@ input:focus {
 }
 
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 300px;
-  min-width: 300px;
-  background: rgba(15, 23, 42, 0.6);
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
-  overflow-y: auto;
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  animation: fadeInOverlay 0.3s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.menu-toggle {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.5rem;
+  z-index: 1001;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-toggle:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.05);
 }
 
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 2rem;
+  padding: 2rem 2rem 2rem 5rem; /* Left padding specialized for the toggle */
   overflow-y: auto;
   position: relative;
 }
+
 
 .history-item {
   padding: 1rem;
@@ -382,4 +474,63 @@ input:focus {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Floating Limit Bar */
+.rate-limit-bar-floating {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.8rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  z-index: 50;
+  animation: floatIn 0.8s cubic-bezier(0.16, 1, 0.3, 1), wobble 10s ease-in-out infinite;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rate-limit-bar-floating:hover {
+  transform: scale(1.05) translateY(-2px);
+  background: rgba(15, 23, 42, 0.6);
+  border-color: var(--primary);
+}
+
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes wobble {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.limit-pulse {
+  animation: pulseIcon 2s ease-in-out infinite;
+}
+
+@keyframes pulseIcon {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+.chat-container-adjusted {
+  position: relative;
+  flex: 1;
+  background: var(--glass-bg);
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
 

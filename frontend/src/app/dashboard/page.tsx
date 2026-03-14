@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { UploadCloud, FileText, Send, LogOut, Clock, Loader2, MessageSquare, Zap } from 'lucide-react';
+import { UploadCloud, FileText, Send, LogOut, Clock, Loader2, MessageSquare, Zap, Menu, X } from 'lucide-react';
 
 interface HistoryItem {
     id: number;
@@ -32,6 +32,7 @@ export default function Dashboard() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [file, setFile] = useState<File | null>(null);
     const [docId, setDocId] = useState<string | null>(null);
@@ -248,13 +249,38 @@ export default function Dashboard() {
 
     return (
         <div className="app-container">
+            {/* Menu Toggle Button */}
+            <button 
+                className="menu-toggle"
+                onClick={() => setIsSidebarOpen(true)}
+                title="Open Sidebar"
+            >
+                <Menu size={24} />
+            </button>
+
+            {/* Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div 
+                    className="sidebar-overlay" 
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <div className="sidebar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-                    <div style={{ padding: '8px', background: 'var(--primary)', borderRadius: '8px' }}>
-                        <FileText size={24} color="white" />
+            <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ padding: '8px', background: 'var(--primary)', borderRadius: '8px' }}>
+                            <FileText size={24} color="white" />
+                        </div>
+                        <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Ask PDF</h2>
                     </div>
-                    <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Ask PDF</h2>
+                    <button 
+                        onClick={() => setIsSidebarOpen(false)}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    >
+                        <X size={24} />
+                    </button>
                 </div>
 
                 {/* Rate limit display in sidebar */}
@@ -355,7 +381,19 @@ export default function Dashboard() {
                     </div>
 
                     {/* Chat Interface — fills remaining height */}
-                    <div className="chat-container">
+                    <div className="chat-container-adjusted">
+                        {/* Floating rate limit bar */}
+                        <div className="rate-limit-bar-floating">
+                            <Zap size={14} className="limit-pulse" style={{ color: questionsLeft === 0 ? 'var(--danger)' : 'var(--success)' }} />
+                            <span className={questionsLeft === 0 ? 'limit-exhausted' : questionsLeft <= 2 ? 'limit-warning' : 'limit-ok'} style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                                {questionsLeft}/{QUESTION_LIMIT} questions left
+                            </span>
+                            {chatMessages.filter(m => m.role === 'user').length > 0 && (
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', borderLeft: '1px solid var(--glass-border)', paddingLeft: '0.8rem' }}>
+                                    {Math.min(chatMessages.filter(m => m.role === 'user').length, 10)} Q&As Context
+                                </span>
+                            )}
+                        </div>
 
                         {/* Chat Messages */}
                         <div className="chat-scroll-area">
@@ -393,20 +431,9 @@ export default function Dashboard() {
                             )}
                         </div>
 
-                        {/* Rate limit bar above input */}
-                        <div className="rate-limit-bar">
-                            <span className={questionsLeft === 0 ? 'limit-exhausted' : questionsLeft <= 2 ? 'limit-warning' : 'limit-ok'}>
-                                💬 {questionsLeft}/{QUESTION_LIMIT} questions left this minute
-                            </span>
-                            {chatMessages.filter(m => m.role === 'user').length > 0 && (
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                                    📚 Using last {Math.min(chatMessages.filter(m => m.role === 'user').length, 10)} Q&amp;As as context
-                                </span>
-                            )}
-                        </div>
-
                         {/* Input Area */}
                         <div className="chat-input-area">
+
                             <form onSubmit={handleAskQuestion} className="chat-input-form">
                                 <input
                                     type="text"
