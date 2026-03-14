@@ -1,1 +1,105 @@
-# Ask_Pdf
+# 📄 Ask PDF - Intelligent PDF Chat Assistant
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-05998b.svg)](https://fastapi.tiangolo.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Deploy to Render](https://img.shields.io/badge/Deploy%20to-Render-46E3B7?style=flat&logo=render&logoColor=white)](https://render.com)
+
+**Ask PDF** is a high-performance, AI-driven backend that allows users to chat with their PDF documents. Using **Retrieval-Augmented Generation (RAG)**, the system extracts text from PDFs, generates semantic embeddings, and provides context-aware answers to user questions using state-of-the-art language models.
+
+---
+
+## ✨ Features
+
+- 📂 **PDF Processing**: Seamlessly extract text and metadata from PDF files using `pypdf`.
+- 🧠 **Semantic Search**: Powered by `SentenceTransformers` (`all-MiniLM-L6-v2`) for fast and accurate context retrieval.
+- ⚡ **Lazy Loading**: Optimized for cloud deployment (Render/Heroku/Vercel) with optimized cold starts.
+- 💬 **Contextual AI**: Integrated with **NVIDIA DeepSeek** for high-quality, document-grounded responses.
+- 🕒 **Chat History**: Persistent conversation tracking integrated with **Supabase**.
+- 🛡️ **Rate Limiting**: Built-in protection using `slowapi` to ensure API stability.
+
+## 🚀 Live Demo
+
+Check out the live API here:  
+👉 [https://ask-pdf-api-dummy-link.onrender.com](https://ask-pdf-api-dummy-link.onrender.com) *(Update this after deployment)*
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: FastAPI
+- **Embeddings**: Sentence-Transformers (CPU optimized)
+- **LLM API**: NVIDIA Integrated (DeepSeek-v3)
+- **Database**: Supabase (PostgreSQL)
+- **PDF Engine**: PyPDF
+- **Security**: Slowapi (Rate limiting) & CORS
+
+---
+
+## 🔧 Installation & Setup
+
+### 1. Prerequisites
+- Python 3.10 or higher
+- A Supabase account (for history storage)
+- An NVIDIA API Key
+
+### 2. Clone and Install
+```bash
+git clone https://github.com/your-username/Ask_Pdf.git
+cd Ask_Pdf
+```
+
+### 3. Setup Virtual Environment
+```bash
+python -m venv venv
+# Windows
+.\venv\Scripts\activate
+# Linux/macOS
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### 4. Configuration
+Create a `.env` file in the root directory:
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_anon_key
+NVIDIA_API_KEY=your_nvidia_api_key
+```
+
+### 5. Run Locally
+```bash
+python -m uvicorn main:app --reload
+```
+The API will be available at `http://localhost:8000`. You can access the automatic documentation at `http://localhost:8000/docs`.
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/` | Health check endpoint |
+| `POST` | `/api/upload` | Upload a PDF and receive a `doc_id` |
+| `POST` | `/api/ask` | Ask a question based on a `doc_id` |
+| `GET` | `/api/history/{uid}`| Retrieve chat history for a specific user |
+
+---
+
+## ☁️ Deployment Tips (Render)
+
+This project is optimized for **Render**:
+1. Choose **Web Service** on Render.
+2. Build Command: `pip install -r requirements.txt`.
+3. Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`.
+4. Add your Environment Variables in the Render dashboard.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+<p align="center">Made with ❤️ for the AI Community</p>
