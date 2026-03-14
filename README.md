@@ -21,7 +21,7 @@
 ## 🚀 Live Demo
 
 Check out the live API here:  
-👉 [https://ask-pdf-api-dummy-link.onrender.com](https://ask-pdf-api-dummy-link.onrender.com) *(Update this after deployment)*
+👉 [https://ask-pdf-backend-hh55.onrender.com](https://ask-pdf-backend-hh55.onrender.com)
 
 ---
 
