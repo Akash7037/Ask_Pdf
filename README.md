@@ -20,8 +20,8 @@
 
 ## 🚀 Live Demo
 
-Check out the live API here:  
-👉 [https://ask-pdf-backend-hh55.onrender.com](https://ask-pdf-backend-hh55.onrender.com)
+- **Frontend**: [https://ask-pdf-gray.vercel.app](https://ask-pdf-gray.vercel.app)
+- **Backend API**: [https://ask-pdf-backend-hh55.onrender.com](https://ask-pdf-backend-hh55.onrender.com)
 
 ---
 
@@ -87,13 +87,24 @@ The API will be available at `http://localhost:8000`. You can access the automat
 
 ---
 
-## ☁️ Deployment Tips (Render)
+## ☁️ Deployment Guides
 
-This project is optimized for **Render**:
+### Deploy Frontend to Vercel
+1. Push your code to a GitHub repository.
+2. Go to [Vercel](https://vercel.com) and click **"Add New"** > **"Project"**.
+3. Import your repository.
+4. **Root Directory**: Set this to `frontend`.
+5. **Environment Variables**: Add the following:
+   - `NEXT_PUBLIC_API_URL`: Your Render backend URL (e.g., `https://...onrender.com`).
+   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase URL.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase Anon Key.
+6. Click **Deploy**.
+
+### Deploy Backend to Render
 1. Choose **Web Service** on Render.
 2. Build Command: `pip install -r requirements.txt`.
 3. Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`.
-4. Add your Environment Variables in the Render dashboard.
+4. Add your Environment Variables (`SUPABASE_URL`, `SUPABASE_KEY`, `NVIDIA_API_KEY`).
 
 ---
 
