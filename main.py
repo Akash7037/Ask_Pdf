@@ -47,8 +47,13 @@ NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
 
 supabase: Client | None = None
 
-if SUPABASE_URL and SUPABASE_KEY:
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+if SUPABASE_URL and SUPABASE_KEY and SUPABASE_URL.startswith("http"):
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print(f"Supabase connection failed: {e}")
+else:
+    print("Supabase not configured or invalid URL.")
 
 # -------------------------
 # Model (loaded at startup)
