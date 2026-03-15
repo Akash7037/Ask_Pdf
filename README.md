@@ -157,7 +157,6 @@ NVIDIA_API_KEY
 Distributed under the **MIT License**.
 See `LICENSE` for more information.
 
----
 
 ❤️ **Made for the AI Community**
 
